@@ -33,7 +33,7 @@ using std::vector;
 /* retry count when connection is lost */
 #define RETRY_COUNT 3
 /* retry period when connection is lost */
-#define RETRY_PERIOD 1 /* second */
+#define RETRY_PERIOD 1000 /* milisecond */
 /* thread pool size */
 #define THREADPOOL_SIZE 2
 /* thread pool queue size */
@@ -50,31 +50,48 @@ using std::vector;
     fprintf(stderr, "\n");\
 } while(0)
 
+#define CHARLES_OPTION_NONE 0
+#define CHARLES_SOCK_BLOCK 1 << 0
+#define CHARLES_SOCK_NONBLOCK 1 << 1
+#define CHARLES_TCP_DELAY 1 << 2
+#define CHARLES_TCP_NODELAY 1 << 3
+#define CHARLES_TCP_KEEPALIVE 1 << 4
+#define CHARLES_TCP_NOKEEPALIVE 1 << 5
+/* more options if you like */
+
 typedef struct tcp_connection_t {
     int fd;
+    int flags;
+    bool valid;
+    pthread_rwlock_t rwlock;
     void *extra;
 } tcp_connection_t;
 
 class CharlesTcpPool {
 public:
-    CharlesTcpPool(char *ip, int port, int max_size = MAX_POOL_SIZE, int init_size = INIT_POOL_SIZE);
+    CharlesTcpPool(const char *ip, int port, int max_size = MAX_POOL_SIZE, int init_size = INIT_POOL_SIZE);
     ~CharlesTcpPool();
-    int initPool(bool nonblock = false);
-    tcp_connection_t * newConnection(bool nonblock = false);
-    getConnection();
-    putConnection();
+    int initPool(int flags = CHARLES_OPTION_NONE);
+    tcp_connection_t * newConnection(int flags = CHARLES_OPTION_NONE);
+    /* flags is for newConnection when ready pool is empty but pool is not full */
+    tcp_connection_t * getConnection(int timeout /* milisecond */, int flags = CHARLES_OPTION_NONE);
+    void putConnection(tcp_connection_t *connection);
+    int setConfig(int sock, int flags);
 public:
     void watchPool();
+    void repairConnection(tcp_connection_t *connection);
 private:
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     int max_pool_size;
     int init_pool_size;
-    int pool_size;
     vector<tcp_connection_t *> pool;
     queue<tcp_connection_t *> ready_pool;
     threadpool_t *threadpool;
     int epollfd;
     char ip[IPLEN];
     int port;
+    bool running;
 };
+
+#endif
