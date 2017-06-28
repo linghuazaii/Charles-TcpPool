@@ -5,11 +5,15 @@ cppflags=-g
 cflags=-g
 cc=g++
 link=-lpthread
+server=server
 
-all:$(bin)
+all:$(bin) $(server)
 
 $(bin):$(src)
 	$(cc) $^ -o $@ $(link)
+
+$(server):server.cpp threadpool.c
+	g++ $^ -o $@ -lpthread
 
 %.o:%.cpp
 	$(cc) $(cppflags) $^ -c -o $@
@@ -18,4 +22,4 @@ $(bin):$(src)
 	$(cc) $(cflags) $^ -c -o $@
 
 clean:
-	-rm -f $(src) $(bin)
+	-rm -f $(src) $(bin) $(server)

@@ -108,7 +108,6 @@ int get_socket_read_buffer_length(int fd) {
 
 /* call back into class */
 void *watch_pool(void *arg) {
-    sleep(600);
     CharlesTcpPool *pool = (CharlesTcpPool *)arg;
     pool->watchPool();
 }
@@ -203,7 +202,6 @@ int CharlesTcpPool::initPool(int flags) {
 }
 
 void CharlesTcpPool::watchPool() {
-    sleep(600);
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < init_pool_size; ++i) {
         struct epoll_event event;
@@ -263,6 +261,7 @@ void CharlesTcpPool::repairConnection(tcp_connection_t *connection) {
         /* get a good connection */
         pthread_rwlock_wrlock(&connection->rwlock);
         connection->valid = true;
+        close(backup); /* close backup if we new connection successfully */
         charles_err("repair finished, new connection %d", connection->fd);
         pthread_rwlock_unlock(&connection->rwlock);
         break;
@@ -304,7 +303,7 @@ tcp_connection_t *CharlesTcpPool::getConnection(int timeout /* milisecond */, in
         pthread_mutex_unlock(&mutex);
         return connection;
     } else {
-        for (int count = 0; count < ready_pool.size(); ++count) {
+        for (int count = 0; count < max_pool_size; ++count) {
             tcp_connection_t *connection = ready_pool.front();
             ready_pool.pop();
             int valid;
