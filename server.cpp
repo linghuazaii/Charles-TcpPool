@@ -40,6 +40,8 @@ int main(int argc, char **argv) {
     server.sin_family = AF_INET;
     server.sin_port = htons(19920);
     server.sin_addr.s_addr = INADDR_ANY;
+    int on = 1;
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(int));
     bind(sock, (struct sockaddr *)&server, sizeof(server));
     listen(sock, 1000);
     threadpool_t * threadpool = threadpool_create(1, 1000, 0);
