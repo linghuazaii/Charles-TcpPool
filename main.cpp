@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
             cout<<"hanging"<<endl;
             continue;
         }
-        cout<<"is there a dead lock?"<<endl;
+        cout<<"get connection: "<<connection->fd<<endl;
         int count = write(connection->fd, text, strlen(text));
         char buffer[256];
         if (count == -1) {
@@ -26,12 +26,13 @@ int main(int argc, char **argv) {
             continue;
         }
         count = read(connection->fd, buffer, 256);
+        buffer[count] = 0;
         if (count == -1) {
             cout<<"read error "<<strerror(errno)<<endl;
         } else if (count > 0)
-            cout<<"count: "<<count<<"\tserver said: "<<buffer<<endl;
+            cout<<"fd: "<<connection->fd<<" count: "<<count<<" server said: "<<buffer<<endl;
         pool.putConnection(connection);
-        //sleep(1);
+        sleep(1);
     }
 
     sleep(86400);

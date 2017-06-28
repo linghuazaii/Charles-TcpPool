@@ -26,7 +26,7 @@ int charles_inet_aton(const char *cp, struct in_addr *inp) {
 
 int charles_connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     int ret = connect(sockfd, addr, addrlen);
-    if (ret == 1) {
+    if (ret == -1) {
         charles_err("connect failed (%s)", strerror(errno));
     }
     return ret;
@@ -152,7 +152,6 @@ CharlesTcpPool::~CharlesTcpPool() {
 tcp_connection_t * CharlesTcpPool::newConnection(int flags) {
     tcp_connection_t *connection = new tcp_connection_t;
     connection->fd = charles_socket(AF_INET, SOCK_STREAM, 0);
-    charles_err("new connection: %d", connection->fd);
     connection->flags = flags;
     connection->valid = true;
     connection->extra = (void *)this;
@@ -228,7 +227,6 @@ void CharlesTcpPool::watchPool() {
                     connection->valid = false;
                     pthread_rwlock_unlock(&connection->rwlock);
                     /* remove from epoll event */
-                    charles_err("connection %d is lost", connection->fd);
                     charles_epoll_ctl(epollfd, EPOLL_CTL_DEL, connection->fd, NULL);
                     threadpool_add(threadpool, repair_connection, (void *)connection, 0);
                 }
@@ -240,7 +238,6 @@ void CharlesTcpPool::watchPool() {
 void CharlesTcpPool::repairConnection(tcp_connection_t *connection) {
     /* I must backup this fd, can't close it, it must remains a valid file descriptor */
     int backup = connection->fd;
-    charles_err("repair connection %d ...", backup);
     int count = 0;
     for (; count < RETRY_COUNT; ++count) {
         connection->fd = charles_socket(AF_INET, SOCK_STREAM, 0);
@@ -262,7 +259,6 @@ void CharlesTcpPool::repairConnection(tcp_connection_t *connection) {
         pthread_rwlock_wrlock(&connection->rwlock);
         connection->valid = true;
         close(backup); /* close backup if we new connection successfully */
-        charles_err("repair finished, new connection %d", connection->fd);
         pthread_rwlock_unlock(&connection->rwlock);
         break;
     }

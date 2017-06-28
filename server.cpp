@@ -27,10 +27,10 @@ void do_close(void *arg) {
     char buffer[256];
     int count = read(fd, buffer, 256);
     buffer[count] = 0;
-    cout<<"count: "<<count<<"\treceive \""<<buffer<<"\""<<endl;
+    cout<<"fd: "<<fd<<" count: "<<count<<"\treceive \""<<buffer<<"\""<<endl;
     write(fd, msg, strlen(msg));
-    close(fd);
-    cout<<"close fd: "<<fd<<endl;
+    //close(fd);
+    //cout<<"close fd: "<<fd<<endl;
     delete (int *)arg;
 }
 

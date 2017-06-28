@@ -1,16 +1,23 @@
-src=threadpool.o main.o charles_tcp_pool.o
-bin=test
+src=threadpool.o charles_tcp_pool.o
+test_src=main.o
+test=test
+library=libcharles_tcp_pool.so.1
+lnso=libcharles_tcp_pool.so
 
-cppflags=-g
-cflags=-g
+cppflags=-fPIC -O3
+cflags=-fPIC -O3
 cc=g++
 link=-lpthread
 server=server
 
-all:$(bin) $(server)
+all:$(library) $(test) $(server)
 
-$(bin):$(src)
-	$(cc) $^ -o $@ $(link)
+$(library):$(src)
+	$(cc) -shared -fPIC -Wl,-soname,$(library) $^ -o $@ $(link)
+	-ln -s $(library) $(lnso)
+
+$(test):$(test_src)
+	$(cc) -L. $^ -o $@ $(link) -lcharles_tcp_pool
 
 $(server):server.cpp threadpool.c
 	g++ $^ -o $@ -lpthread
@@ -18,8 +25,8 @@ $(server):server.cpp threadpool.c
 %.o:%.cpp
 	$(cc) $(cppflags) $^ -c -o $@
 
-%.o:%.cpp
+%.o:%.c
 	$(cc) $(cflags) $^ -c -o $@
 
 clean:
-	-rm -f $(src) $(bin) $(server)
+	-rm -f $(src) $(test) $(server) $(test_src) $(library) $(lnso)
