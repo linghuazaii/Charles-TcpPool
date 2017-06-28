@@ -143,6 +143,7 @@ CharlesTcpPool::~CharlesTcpPool() {
         delete connection;
     }
     running = false;
+    close(epollfd);
     ready_pool = queue<tcp_connection_t *>();
     pthread_mutex_unlock(&mutex);
     pthread_mutex_destroy(&mutex);
