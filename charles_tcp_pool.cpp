@@ -205,10 +205,7 @@ void CharlesTcpPool::watchPool() {
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < init_pool_size; ++i) {
         struct epoll_event event;
-        if (pool[i]->flags & CHARLES_SOCK_NONBLOCK)
-            event.events = EPOLLIN | EPOLLET;
-        else
-            event.events = EPOLLIN;
+        event.events = EPOLLIN;
         event.data.ptr = (void *)pool[i];
         charles_epoll_ctl(epollfd, EPOLL_CTL_ADD, pool[i]->fd, &event);
     }
@@ -265,10 +262,7 @@ void CharlesTcpPool::repairConnection(tcp_connection_t *connection) {
     }
     /* add to epoll event even if this connection is not repaired, wait for next time repair */
     struct epoll_event event;
-    if (connection->flags & CHARLES_SOCK_NONBLOCK)
-        event.events = EPOLLIN | EPOLLET;
-    else
-        event.events = EPOLLIN;
+    event.events = EPOLLIN;
     if (count == RETRY_COUNT) { /* failed, add original fd to epoll events */
         connection->fd = backup;
     }
